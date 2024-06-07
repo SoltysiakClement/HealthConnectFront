@@ -10,20 +10,18 @@ COPY frontend/package*.json ./
 # Installer les dépendances
 RUN npm install
 
-# Copier tout le code de l'application dans le conteneur
-COPY frontend ./
+# Copier tout le contenu du répertoire frontend dans le répertoire de travail du conteneur
+COPY frontend/ .
 
-# Construire l'application pour la production
+# Construire l'application React pour la production
 RUN npm run build
 
-# Utiliser une image de serveur web léger pour servir les fichiers de l'application React
+# Utiliser une image Nginx pour servir l'application
 FROM nginx:alpine
+COPY --from=0 /app/build /usr/share/nginx/html
 
-# Copier les fichiers build de React vers le dossier nginx
-COPY --from=0 /app/frontend/build /usr/share/nginx/html
-
-# Exposer le port sur lequel le serveur va écouter
+# Exposer le port 80
 EXPOSE 80
 
-# Commande pour démarrer le serveur nginx
+# Démarrer Nginx
 CMD ["nginx", "-g", "daemon off;"]
