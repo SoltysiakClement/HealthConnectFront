@@ -16,10 +16,6 @@ COPY frontend/ .
 # Construire l'application React pour la production
 RUN npm run build
 
-# Utiliser une image Nginx pour servir l'application
-FROM nginx:alpine
-COPY --from=0 /app/build /usr/share/nginx/html
-
 # Exposer le port 80
 EXPOSE 80
 
