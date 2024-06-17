@@ -4,13 +4,14 @@ on:
   push:
     branches:
       - main
+      - master
   pull_request:
     branches:
       - main
+      - master
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -31,6 +32,14 @@ jobs:
     - name: Build Docker image for frontend
       run: docker build --tag healthconnect-frontend .
 
+  push:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
     - name: Push Docker image to Docker Hub
       if: github.ref == 'refs/heads/main'
       run: |
@@ -38,7 +47,12 @@ jobs:
         docker tag healthconnect-frontend ${{ secrets.DOCKER_USERNAME }}/healthconnect-frontend:latest
         docker push ${{ secrets.DOCKER_USERNAME }}/healthconnect-frontend:latest
 
+  deploy:
+    runs-on: ubuntu-latest
+    needs: push
+
+    steps:
     - name: Deploy to VPS
       if: github.ref == 'refs/heads/main'
       run: |
-        ssh root@${{ secrets.VPS_HOST }} "docker pull ${{ secrets.DOCKER_USERNAME }}/healthconnect-frontend:latest && docker stop healthconnect-frontend || true && docker rm healthconnect-frontend || true && docker run -d --name healthconnect-frontend -p 80:80 ${{ secrets.DOCKER_USERNAME }}/healthconnect-frontend:latest"
+        ssh -o StrictHostKeyChecking=no root@${{ secrets.VPS_HOST }} "docker pull ${{ secrets.DOCKER_USERNAME }}/healthconnect-frontend:latest && docker stop healthconnect-frontend || true && docker rm healthconnect-frontend || true && docker run -d --name healthconnect-frontend -p 80:80 ${{ secrets.DOCKER_USERNAME }}/healthconnect-frontend:latest"
